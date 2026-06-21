@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { FiMenu, FiX, FiUser, FiLogOut, FiSun, FiMoon, FiChevronDown } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiLogOut, FiSun, FiMoon, FiChevronDown, FiHeart } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';
@@ -63,6 +63,17 @@ export default function Navbar() {
               >
                 <span>Dashboard</span>
                 <FiChevronDown size={14} />
+              </Link>
+            )}
+
+            {user && (
+              <Link
+                href="/wishlist"
+                className={`nav-link flex items-center space-x-1 ${isActive('/wishlist') ? 'nav-link-active' : ''}`}
+                title="My Wishlist"
+              >
+                <FiHeart size={18} />
+                <span>Wishlist</span>
               </Link>
             )}
 
@@ -140,6 +151,17 @@ export default function Navbar() {
                 className={`block nav-link ${pathname?.startsWith('/dashboard') ? 'nav-link-active' : ''}`}
               >
                 Dashboard
+              </Link>
+            )}
+
+            {user && (
+              <Link
+                href="/wishlist"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center space-x-2 nav-link ${isActive('/wishlist') ? 'nav-link-active' : ''}`}
+              >
+                <FiHeart size={18} />
+                <span>Wishlist</span>
               </Link>
             )}
 
