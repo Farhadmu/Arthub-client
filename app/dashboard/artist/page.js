@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { FiPlus, FiEdit, FiTrash2, FiDollarSign, FiImage, FiUser, FiLock, FiSave, FiUpload } from 'react-icons/fi';
 
 export default function ArtistDashboard() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [artworks, setArtworks] = useState([]);
   const [sales, setSales] = useState([]);
@@ -31,11 +31,12 @@ export default function ArtistDashboard() {
   const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return; // wait until auth state is resolved (prevents false redirect on reload)
     if (!user) { router.push('/login'); return; }
     if (user.role !== 'artist') { router.push('/'); return; }
     setProfileData({ name: user.name, avatar: user.avatar || '' });
     fetchData();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchData = async () => {
     try {
@@ -160,7 +161,7 @@ export default function ArtistDashboard() {
     }
   };
 
-  if (!user || loading) return <Loading fullScreen />;
+  if (authLoading || !user || loading) return <Loading fullScreen />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -552,3 +553,4 @@ export default function ArtistDashboard() {
     </div>
   );
 }
+

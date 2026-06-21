@@ -14,7 +14,7 @@ import {
 const CHART_COLORS = ['#c4431f', '#e8a838', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444'];
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [artworks, setArtworks] = useState([]);
@@ -24,10 +24,11 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
+    if (authLoading) return; // wait until auth state is resolved (prevents false redirect on reload)
     if (!user) { router.push('/login'); return; }
     if (user.role !== 'admin') { router.push('/'); return; }
     fetchData();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchData = async () => {
     try {
@@ -69,7 +70,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!user || loading) return <Loading fullScreen />;
+  if (authLoading || !user || loading) return <Loading fullScreen />;
 
   const pieData = analytics?.salesByCategory?.map((item) => ({
     name: item._id || 'Unknown',

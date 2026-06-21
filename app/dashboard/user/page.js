@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { FiShoppingBag, FiStar, FiUser, FiImage, FiLock, FiSave, FiUpload, FiCheck } from 'react-icons/fi';
 
 export default function UserDashboard() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +25,12 @@ export default function UserDashboard() {
   const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return; // wait until auth state is resolved (prevents false redirect on reload)
     if (!user) { router.push('/login'); return; }
     if (user.role !== 'user') { router.push('/'); return; }
     setProfileData({ name: user.name, avatar: user.avatar || '' });
     fetchPurchases();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchPurchases = async () => {
     try {
@@ -111,7 +112,7 @@ export default function UserDashboard() {
     }
   };
 
-  if (!user || loading) return <Loading fullScreen />;
+  if (authLoading || !user || loading) return <Loading fullScreen />;
 
   const subscriptionTiers = [
     { key: 'free', name: 'Free', price: 0, maxPurchases: 3, current: user.subscriptionTier === 'free' },
