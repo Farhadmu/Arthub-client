@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi';
 
 export default function WishlistPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +18,10 @@ export default function WishlistPage() {
   const [purchasingId, setPurchasingId] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return; // wait until auth state is resolved
     if (!user) { router.push('/login'); return; }
     fetchWishlist();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchWishlist = async () => {
     try {
@@ -57,7 +58,7 @@ export default function WishlistPage() {
     }
   };
 
-  if (!user || loading) return <Loading fullScreen />;
+  if (authLoading || !user || loading) return <Loading fullScreen />;
 
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-brown-800 py-12">
