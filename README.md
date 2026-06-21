@@ -1,144 +1,182 @@
-# ArtHub Client - Online Art Marketplace
+<div align="center">
 
-## Overview
-Frontend for ArtHub - A digital platform connecting art lovers with talented artists. Built with Next.js 14, Tailwind CSS, and modern React patterns.
+# 🎨 ArtHub — Online Art Marketplace
 
-## Live Demo
-[Your Vercel URL]
+**A full-stack digital platform connecting art lovers with talented artists**
 
-## Features
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Stripe](https://img.shields.io/badge/Payments-Stripe-635BFF?logo=stripe)](https://stripe.com/)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black?logo=vercel)](https://vercel.com/)
 
-### Pages
-- **Home** - Hero carousel, featured artworks, top artists, categories
-- **Browse Artworks** - Search, filter, sort, pagination
-- **Artwork Details** - Full artwork info, purchase, comments
-- **Login/Register** - Email/password and Google OAuth
-- **User Dashboard** - Purchase history, subscriptions, profile
-- **Artist Dashboard** - Manage artworks, sales history
-- **Admin Dashboard** - User management, analytics, transactions
+[Live Site](https://arthub-client-olive.vercel.app) · [Backend Repo](https://github.com/Farhadmu/Arthub-server) · [Report Issue](https://github.com/Farhadmu/Arthub-client/issues)
 
-### Key Features
-- Role-based authentication (User, Artist, Admin)
-- Dark mode toggle with persistent state
-- Responsive design (mobile, tablet, desktop)
-- Advanced search and filtering
-- Pagination support
-- Image upload via imgBB
-- Stripe payment integration
-- Real-time comments system
-- Skeleton loaders
-- Framer Motion animations
-- Error boundaries
-- Toast notifications
+</div>
 
-## Tech Stack
-- **Next.js 14** - React framework with App Router
-- **Tailwind CSS** - Utility-first CSS framework
-- **Framer Motion** - Animation library
-- **Swiper** - Modern touch slider
-- **React Hot Toast** - Toast notifications
-- **Next Themes** - Dark mode support
-- **React Icons** - Icon library
-- **Axios** - HTTP client
+---
 
-## Getting Started
+## 📖 About The Project
 
-### Prerequisites
-- Node.js 18+
-- Backend server running
+ArtHub is a digital platform that connects art lovers, collectors, and buyers with talented artists. The platform allows users to browse, discover, and purchase original artworks. Artists can upload and manage their creations, while an admin oversees the entire system.
 
-### Installation
+Traditional art buying is often limited to galleries or physical exhibitions. ArtHub democratizes access to art, enables emerging artists to reach global audiences, and provides a secure, streamlined purchase experience — built on the MERN-style stack (MongoDB, Express, Next.js/React, Node.js) with role-based access, Stripe payment integration, and interactive features like comments and analytics.
+
+### 🔑 Demo Credentials
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@arthub.com` | `Admin@123` |
+
+---
+
+## 📑 Table of Contents
+
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Environment Variables](#-environment-variables)
+- [Getting Started](#-getting-started)
+- [API Overview](#-api-overview-backend)
+- [Links](#-links)
+
+---
+
+## ✨ Key Features
+
+### 🔐 Authentication & Roles
+- Email/password and Google OAuth login & registration
+- JWT-based sessions (7-day expiry)
+- Three roles: **User**, **Artist**, **Admin** — each with a dedicated dashboard
+
+### 🖼️ Artwork Discovery
+- Hero banner carousel, Featured Artworks, Top Artists, Category grid
+- Browse page with **search**, **category/price filters**, **sorting**, and **pagination**
+- Detailed artwork page with high-res image, description, price, and artist profile link
+
+### 💳 Payments (Stripe)
+- One-time artwork purchases via Stripe Checkout
+- Subscription tiers — **Free** (3 purchases), **Pro** (9 purchases, $9.99/mo), **Premium** (unlimited, $19.99/mo)
+- Automatic "Sold" badge once an artwork is purchased
+
+### 💬 Engagement
+- Purchase-gated comment system (edit/delete own comments)
+- Wishlist — save, remove, or buy artworks directly
+- Dummy email notifications (simulated, logged on the backend) after purchase/subscription
+
+### 📊 Dashboards
+- **User:** Purchase history, bought artworks gallery, subscription overview, profile management
+- **Artist:** Manage artworks (CRUD), add/edit forms with imgBB image upload, sales history, profile management
+- **Admin:** Manage users & roles, manage all artworks, view all transactions, analytics cards, sales charts (bar + pie)
+
+### 🎨 UX Details
+- Fully responsive (mobile, tablet, desktop)
+- Dark mode toggle (persisted)
+- Skeleton loaders & global loading spinner
+- Custom 404 page and error boundary fallback
+- Toast notifications for all API actions
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|---|---|
+| Framework | [Next.js 14](https://nextjs.org/) (App Router) |
+| Styling | [Tailwind CSS](https://tailwindcss.com/) |
+| Animation | [Framer Motion](https://www.framer.com/motion/) |
+| HTTP Client | [Axios](https://axios-http.com/) |
+| Charts | [Recharts](https://recharts.org/) |
+| Notifications | [react-hot-toast](https://react-hot-toast.com/) |
+| Icons | [react-icons](https://react-icons.github.io/react-icons/) |
+| Loaders | [react-loader-spinner](https://www.npmjs.com/package/react-loader-spinner) |
+| Carousel | [Swiper](https://swiperjs.com/) |
+| Theme | [next-themes](https://github.com/pacocoursey/next-themes) |
+| Image Hosting | [imgBB API](https://api.imgbb.com/) |
+| Payments | [Stripe Checkout](https://stripe.com/payments/checkout) |
+| Auth | JWT + Google OAuth |
+| Deployment | [Vercel](https://vercel.com/) |
+
+---
+
+## 📁 Project Structure
+
+```
+arthub-client/
+├── app/
+│   ├── about/                # About page
+│   ├── artists/[id]/         # Public artist profile page
+│   ├── artworks/             # Browse + artwork details ([id])
+│   ├── contact/               # Contact form page
+│   ├── dashboard/
+│   │   ├── admin/            # Admin dashboard
+│   │   ├── artist/           # Artist dashboard + edit/[id]
+│   │   └── user/             # User dashboard
+│   ├── login/ register/      # Auth pages
+│   ├── privacy/ terms/       # Legal pages
+│   └── wishlist/             # Wishlist page
+├── components/                # Navbar, Footer, ArtworkCard, Loading, etc.
+├── context/                   # AuthContext (JWT/session state)
+└── lib/                       # Axios instance
+```
+
+---
+
+## 🔧 Environment Variables
+
+Create a `.env.local` file in the root:
+
+```env
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_IMGBB_API_KEY=
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+```
+
+---
+
+## 🚀 Getting Started
 
 ```bash
+# Clone the repo
+git clone https://github.com/Farhadmu/Arthub-client.git
+cd Arthub-client
+
 # Install dependencies
 npm install
 
-# Set up environment variables
-# Create .env.local file with:
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
-
-# Run development server
+# Run the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Environment Variables
+---
 
-Create `.env.local` in the root directory:
+## 🔌 API Overview (Backend)
 
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
-```
+This frontend consumes a separate Express + MongoDB API. See the [backend repo](https://github.com/Farhadmu/Arthub-server) for full route documentation.
 
-## Project Structure
+| Route Prefix | Purpose |
+|---|---|
+| `/api/auth` | Register, login, Google login, profile, password |
+| `/api/artworks` | Browse, search, filter, CRUD, artist-specific listing |
+| `/api/transactions` | Stripe checkout, webhook, purchase/sales history, analytics |
+| `/api/comments` | Purchase-gated comment CRUD |
+| `/api/users` | Admin user management |
+| `/api/wishlist` | Add/remove/list wishlist items |
 
-```
-app/
-├── artworks/
-│   ├── [id]/
-│   │   └── page.js          # Artwork details
-│   └── page.js              # Browse artworks
-├── dashboard/
-│   ├── admin/page.js        # Admin dashboard
-│   ├── artist/page.js       # Artist dashboard
-│   └── user/page.js         # User dashboard
-├── login/page.js            # Login page
-├── register/page.js         # Register page
-├── layout.js                # Root layout
-├── page.js                  # Home page
-├── providers.js             # Context providers
-└── globals.css              # Global styles
+---
 
-components/
-├── Navbar.js                # Navigation bar
-├── Footer.js                # Footer
-├── ArtworkCard.js           # Artwork card component
-└── Loading.js               # Loading states
+## 🔗 Links
 
-context/
-└── AuthContext.js           # Authentication context
+- **Live Site:** [arthub-client-olive.vercel.app](https://arthub-client-olive.vercel.app)
+- **Frontend Repo:** [github.com/Farhadmu/Arthub-client](https://github.com/Farhadmu/Arthub-client)
+- **Backend Repo:** [github.com/Farhadmu/Arthub-server](https://github.com/Farhadmu/Arthub-server)
 
-lib/
-└── axios.js                 # Axios instance
-```
+---
 
-## Deployment
+<div align="center">
 
-### Deploy to Vercel
+Built with ❤️ for art lovers and creators everywhere.
 
-1. Push code to GitHub
-2. Go to [Vercel](https://vercel.com)
-3. Import your repository
-4. Set environment variables:
-   - `NEXT_PUBLIC_API_URL` = your live backend URL
-   - `NEXT_PUBLIC_IMGBB_API_KEY` = your imgBB API key
-5. Deploy
-
-### Build for Production
-
-```bash
-npm run build
-npm start
-```
-
-## Authentication Flow
-
-1. User registers/logs in
-2. JWT token stored in localStorage
-3. Token sent with every API request
-4. Role-based redirects after login
-5. Protected routes check auth state
-
-## Payment Flow
-
-1. User clicks "Buy Now"
-2. Backend creates Stripe checkout session
-3. User redirected to Stripe
-4. On success, webhook updates database
-5. User redirected back to dashboard
-
-## License
-MIT
+</div>
