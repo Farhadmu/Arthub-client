@@ -1,7 +1,24 @@
+'use client';
+import { useState } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { FiFacebook, FiTwitter, FiInstagram, FiGithub } from 'react-icons/fi';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    // Frontend-only placeholder — no backend endpoint, just a friendly confirmation.
+    toast.success("Thanks for subscribing! You'll hear from us soon.");
+    setSubscribed(true);
+    setEmail('');
+    setTimeout(() => setSubscribed(false), 3000);
+  };
+
   return (
     <footer className="bg-primary-600 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -41,16 +58,22 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Newsletter</h3>
             <p className="text-sm mb-4 opacity-90">Subscribe to get updates on new artworks and artists.</p>
-            <div className="flex">
+            <form onSubmit={handleSubscribe} className="flex">
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
-                className="flex-1 px-4 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-l-lg focus:outline-none focus:bg-opacity-30 placeholder-white placeholder-opacity-70"
+                className="flex-1 px-4 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-l-lg focus:outline-none focus:bg-opacity-30 placeholder-white placeholder-opacity-70 min-w-0"
               />
-              <button className="px-4 py-2 bg-white text-primary-600 font-medium rounded-r-lg hover:bg-opacity-90 transition-all">
-                Subscribe
+              <button
+                type="submit"
+                className="px-4 py-2 bg-white text-primary-600 font-medium rounded-r-lg hover:bg-opacity-90 transition-all whitespace-nowrap"
+              >
+                {subscribed ? 'Subscribed!' : 'Subscribe'}
               </button>
-            </div>
+            </form>
             <div className="flex space-x-4 mt-6">
               <a href="https://www.facebook.com/mdfarhadullislamfahim" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiFacebook size={20} /></a>
               <a href="https://x.com/MdFarhadul1b" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiTwitter size={20} /></a>

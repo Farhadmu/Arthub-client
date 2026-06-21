@@ -127,6 +127,7 @@ export default function ArtworkDetailPage() {
 
   const isOwner = user && artwork.artist?._id === user._id;
   const canPurchase = user && !isOwner && !artwork.isSold;
+  const artistId = artwork.artist?._id || artwork.artist;
 
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-brown-800 py-8">
@@ -164,7 +165,7 @@ export default function ArtworkDetailPage() {
               </h1>
 
               <Link
-                href={`/artworks?search=${artwork.artistName}`}
+                href={`/artists/${artistId}`}
                 className="text-lg text-primary-600 hover:text-primary-700 mb-4 font-medium"
               >
                 by {artwork.artistName}
