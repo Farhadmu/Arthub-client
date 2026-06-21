@@ -52,10 +52,10 @@ export default function Footer() {
               </button>
             </div>
             <div className="flex space-x-4 mt-6">
-              <a href="#" className="hover:opacity-80 transition-opacity"><FiFacebook size={20} /></a>
-              <a href="#" className="hover:opacity-80 transition-opacity"><FiTwitter size={20} /></a>
+              <a href="https://www.facebook.com/mdfarhadullislamfahim" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiFacebook size={20} /></a>
+              <a href="https://x.com/MdFarhadul1b" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiTwitter size={20} /></a>
               <a href="#" className="hover:opacity-80 transition-opacity"><FiInstagram size={20} /></a>
-              <a href="#" className="hover:opacity-80 transition-opacity"><FiGithub size={20} /></a>
+              <a href="https://github.com/Farhadmu" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiGithub size={20} /></a>
             </div>
           </div>
         </div>
