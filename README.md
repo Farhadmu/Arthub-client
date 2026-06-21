@@ -21,11 +21,6 @@ ArtHub is a digital platform that connects art lovers, collectors, and buyers wi
 
 Traditional art buying is often limited to galleries or physical exhibitions. ArtHub democratizes access to art, enables emerging artists to reach global audiences, and provides a secure, streamlined purchase experience — built on the MERN-style stack (MongoDB, Express, Next.js/React, Node.js) with role-based access, Stripe payment integration, and interactive features like comments and analytics.
 
-### 🔑 Demo Credentials
-
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@arthub.com` | `Admin@123` |
 
 ---
 
