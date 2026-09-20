@@ -134,6 +134,11 @@ export default function RoomPreviewModal({ isOpen, onClose, artwork }) {
               {/* Glass glare reflection */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none opacity-60" />
             </div>
+
+            {/* Scale dimension badge */}
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-mono tracking-wider shadow-md pointer-events-none">
+              {currentScale.label}
+            </div>
           </div>
 
           {/* Human Silhouette reference for true-to-life scale */}
