@@ -106,6 +106,20 @@ export default function ArtworkCard({ artwork }) {
             </h3>
           </Link>
 
+          {/* Color Palette Indicators */}
+          {artwork.colorPalette && artwork.colorPalette.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              {artwork.colorPalette.slice(0, 5).map((color, idx) => (
+                <span
+                  key={idx}
+                  className="w-2.5 h-2.5 rounded-full border border-black/10 shadow-xs"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          )}
+
           <div className="mt-1 flex items-center justify-between text-xs text-canvas-500 dark:text-ivory-400">
             {artistId ? (
               <Link
