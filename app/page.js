@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import ArtworkCard from '@/components/ArtworkCard';
 import { ArtworkCardSkeleton } from '@/components/Loading';
 import SparklesIcon from '@/components/SparklesIcon';
+import HomePaletteBar from '@/components/HomePaletteBar';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import {
@@ -185,6 +186,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Hero Interior Color Bar */}
+      <HomePaletteBar />
 
       {/* 2. AI VISUAL DISCOVERY BANNER */}
       <section className="py-12 bg-white dark:bg-canvas-900 border-b border-ivory-200 dark:border-canvas-800">
