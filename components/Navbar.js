@@ -36,6 +36,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Browse Art', path: '/artworks' },
+    { name: 'Live Auctions', path: '/auctions', isLive: true },
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
   ];
@@ -74,9 +75,15 @@ export default function Navbar() {
                 <Link
                   key={link.path}
                   href={link.path}
-                  className={`nav-link ${isActive(link.path) ? 'nav-link-active' : ''}`}
+                  className={`nav-link inline-flex items-center gap-1.5 ${isActive(link.path) ? 'nav-link-active' : ''}`}
                 >
-                  {link.name}
+                  <span>{link.name}</span>
+                  {link.isLive && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[9px] font-bold tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 live-pulse" />
+                      LIVE
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
