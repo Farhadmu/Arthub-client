@@ -43,13 +43,17 @@ Traditional art buying is often limited to galleries or physical exhibitions. Ar
 - JWT-based sessions (7-day expiry)
 - Three roles: **User**, **Artist**, **Admin** — each with a dedicated dashboard
 
-### 🏛️ Luxury & Next-Gen Experience Features (v2.1)
+### 🏛️ Luxury & Next-Gen Experience Features (v2.1 - v2.2)
 - **🖼️ View on Your Wall (3D / AR Preview)**: Interactive room simulation with realistic wall textures (Modern Minimalist Living Room, Industrial Concrete Loft, Classic White Cube Gallery), custom luxury frames (Raw Oak, Gold Leaf Rococo, Walnut Float, Obsidian Minimalist), live paint color picker, and 1:1 human silhouette scale reference.
+- **✨ Interactive Wall Showcase (Home Page)**: Live in-page frame and wall paint simulation allowing visitors to customize lighting and frames on the home page.
+- **🌟 Masterwork of the Week (Curator's Spotlight)**: Chief curatorial spotlight highlighting the top weekly piece with instant Audio Guide playback and 3D Holographic Seal.
+- **⚡ Live Art Auction Arena (Home Spotlight)**: Active real-time countdown timer, current bid ticker, and quick bidding trigger integrated directly into the home flow.
+- **🎯 Art Matchmaker Teaser & Interactive Discovery**: Stacked-card aesthetic reaction mode accessible via 1 click from home.
+- **🎨 Quick Interior Palette Bar**: 6 curated luxury wall swatches (Tuscan Ochre, Royal Azure, Emerald Forest, etc.) for 1-click aesthetic matching.
+- **🏆 Verified Collector Testimonials**: Real-time quotes from international patrons, gallerists, and architectural directors.
 - **📜 Digital Certificate of Authenticity (COA)**: Cryptographically secured certificate with unique SHA-256 verification hash, interactive 3D holographic foil seal reacting to mouse physics, QR code linking to public verification route (`/verify/[hash]`), and print-ready high-resolution export.
-- **⚡ Live Art Auctions & Real-Time Bidding**: Dedicated Auction Hub (`/auctions`) featuring active countdown timers, live pulse indicators, anti-sniping dynamic time extensions, quick increment bidding chips, and real-time bidder leaderboard.
 - **🎧 AI Museum Audio Guide**: Curated curatorial narratives synthesized using Web Speech API, synced real-time canvas waveform visualizer, playback rate controls, and expandable transcript drawer.
 - **🎨 Interior Palette Matcher**: Explore artworks matching interior design hex codes using an interactive HSL color wheel and delta-E color distance sorting.
-- **✨ Art Matchmaker (Discovery Mode)**: Intuitive swipe card discovery interface matching users to artworks based on immediate aesthetic reactions.
 
 ### 🖼️ Artwork Discovery
 - Hero banner carousel, Featured Artworks, Top Artists, Category grid
