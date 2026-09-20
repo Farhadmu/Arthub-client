@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../lib/axios';
 import SparklesIcon from './SparklesIcon';
+import WaveformVisualizer from './WaveformVisualizer';
 import { FiPlay, FiPause, FiRotateCcw, FiVolume2, FiVolumeX, FiList } from 'react-icons/fi';
 
 export default function AudioGuidePlayer({ artworkId, artworkTitle, artistName }) {
@@ -163,6 +164,11 @@ export default function AudioGuidePlayer({ artworkId, artworkTitle, artistName }
             <FiList className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {/* Live Audio Waveform */}
+      <div className="pt-2">
+        <WaveformVisualizer isPlaying={isPlaying} />
       </div>
 
       {/* Transcript Drawer */}
