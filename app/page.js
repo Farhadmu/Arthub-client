@@ -10,6 +10,8 @@ import MasterpieceOfTheWeek from '@/components/MasterpieceOfTheWeek';
 import InteractiveWallShowcase from '@/components/InteractiveWallShowcase';
 import HomeAuctionSpotlight from '@/components/HomeAuctionSpotlight';
 import MatchmakerTeaser from '@/components/MatchmakerTeaser';
+import CollectorTestimonials from '@/components/CollectorTestimonials';
+import ArtMatchmaker from '@/components/ArtMatchmaker';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import {
@@ -23,6 +25,7 @@ export default function HomePage() {
   const [topArtists, setTopArtists] = useState([]);
   const [recommendations, setRecommendations] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMatchmakerOpen, setIsMatchmakerOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -461,6 +464,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SWIPE DISCOVERY MATCHMAKER TEASER */}
+      <MatchmakerTeaser onOpenMatchmaker={() => setIsMatchmakerOpen(true)} />
+
+      {/* VERIFIED COLLECTOR TESTIMONIALS */}
+      <CollectorTestimonials />
+
       {/* 8. AI ART CURATOR BANNER CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-tr from-brand-600 via-brand-500 to-gold-500 p-8 sm:p-14 text-white text-center shadow-luxury relative overflow-hidden">
@@ -498,6 +507,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Interactive Art Matchmaker Modal */}
+      <ArtMatchmaker
+        isOpen={isMatchmakerOpen}
+        onClose={() => setIsMatchmakerOpen(false)}
+      />
     </div>
   );
 }
