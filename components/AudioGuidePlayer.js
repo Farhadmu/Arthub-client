@@ -48,9 +48,12 @@ export default function AudioGuidePlayer({ artworkId, artworkTitle, artistName }
     };
   }, [artworkId, artworkTitle, artistName]);
 
+  const [speechError, setSpeechError] = useState('');
+
   const handlePlayPause = () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      alert('Speech synthesis is not supported on this browser.');
+      setSpeechError('Audio speech narration is not supported on this browser. You can read the full curator transcript below.');
+      setShowTranscript(true);
       return;
     }
 
@@ -164,7 +167,13 @@ export default function AudioGuidePlayer({ artworkId, artworkTitle, artistName }
             <FiList className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      {/* Speech fallback notification */}
+      {speechError && (
+        <div className="mt-3 p-2.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-300 text-xs flex items-center justify-between">
+          <span>{speechError}</span>
+          <button onClick={() => setSpeechError('')} className="text-canvas-400 hover:text-white text-xs ml-2">✕</button>
+        </div>
+      )}
 
       {/* Live Audio Waveform */}
       <div className="pt-2">
