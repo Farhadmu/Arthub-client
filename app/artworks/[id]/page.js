@@ -9,10 +9,14 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useUI } from '@/context/UIContext';
 import Loading from '@/components/Loading';
 import ArtworkCard from '@/components/ArtworkCard';
+import RoomPreviewModal from '@/components/RoomPreviewModal';
+import AudioGuidePlayer from '@/components/AudioGuidePlayer';
+import CertificateModal from '@/components/CertificateModal';
+import SparklesIcon from '@/components/SparklesIcon';
 import toast from 'react-hot-toast';
 import {
   FiEdit, FiTrash2, FiShoppingCart, FiMessageCircle, FiHeart,
-  FiShare2, FiArrowLeft, FiCheck, FiX, FiEye, FiTag
+  FiShare2, FiArrowLeft, FiCheck, FiX, FiEye, FiTag, FiMaximize2, FiAward
 } from 'react-icons/fi';
 
 export default function ArtworkDetailPage() {
@@ -23,6 +27,8 @@ export default function ArtworkDetailPage() {
   const { openCurator } = useUI();
 
   const [artwork, setArtwork] = useState(null);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
   const [comments, setComments] = useState([]);
   const [similarArtworks, setSimilarArtworks] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -134,6 +140,14 @@ export default function ArtworkDetailPage() {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowRoomModal(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gold-500/40 bg-gold-500/10 text-gold-600 dark:text-gold-400 hover:bg-gold-500 hover:text-white text-xs font-semibold shadow-sm transition-all"
+              title="View on Your Wall in 3D"
+            >
+              <SparklesIcon className="w-3.5 h-3.5" />
+              <span>View on Wall</span>
+            </button>
+            <button
               onClick={handleShare}
               className="p-2.5 rounded-xl border border-ivory-300 dark:border-canvas-700 bg-white dark:bg-canvas-850 text-canvas-600 dark:text-ivory-300 hover:text-brand-500 transition-colors"
               title="Share Artwork"
@@ -191,6 +205,15 @@ export default function ArtworkDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* AI Museum Audio Guide */}
+            <div className="pt-2">
+              <AudioGuidePlayer
+                artworkId={artwork._id}
+                artworkTitle={artwork.title}
+                artistName={artwork.artistName}
+              />
+            </div>
           </div>
 
           {/* Right Column: Information, Artist & Acquisition CTAs */}
@@ -407,6 +430,20 @@ export default function ArtworkDetailPage() {
             ))}
           </div>
         </div>
+
+        {/* 3D Room Preview Modal */}
+        <RoomPreviewModal
+          isOpen={showRoomModal}
+          onClose={() => setShowRoomModal(false)}
+          artwork={artwork}
+        />
+
+        {/* Certificate Modal */}
+        <CertificateModal
+          isOpen={showCertModal}
+          onClose={() => setShowCertModal(false)}
+          artwork={artwork}
+        />
       </div>
     </div>
   );
