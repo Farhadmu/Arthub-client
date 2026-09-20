@@ -41,6 +41,16 @@ export default function RoomPreviewModal({ isOpen, onClose, artwork }) {
       class: 'border-8 border-[#C8AD8D] shadow-[0_15px_30px_rgba(0,0,0,0.4)]',
     },
     {
+      id: 'walnut',
+      name: 'Aged Florentine Walnut',
+      class: 'border-8 border-[#5C4033] shadow-[0_18px_35px_rgba(0,0,0,0.55)]',
+    },
+    {
+      id: 'platinum',
+      name: 'Brushed Platinum Silver',
+      class: 'border-8 border-[#D0D4DC] shadow-[0_15px_30px_rgba(0,0,0,0.45)]',
+    },
+    {
       id: 'floating',
       name: 'Gallery Floating Canvas',
       class: 'p-2 bg-black/40 shadow-[0_20px_45px_rgba(0,0,0,0.55)]',
