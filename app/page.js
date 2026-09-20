@@ -8,6 +8,8 @@ import SparklesIcon from '@/components/SparklesIcon';
 import HomePaletteBar from '@/components/HomePaletteBar';
 import MasterpieceOfTheWeek from '@/components/MasterpieceOfTheWeek';
 import InteractiveWallShowcase from '@/components/InteractiveWallShowcase';
+import HomeAuctionSpotlight from '@/components/HomeAuctionSpotlight';
+import MatchmakerTeaser from '@/components/MatchmakerTeaser';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import {
@@ -405,6 +407,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* LIVE AUCTION ARENA SPOTLIGHT */}
+      <HomeAuctionSpotlight />
 
       {/* 7. HOW ARTHUB WORKS */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
