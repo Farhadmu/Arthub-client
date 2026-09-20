@@ -6,6 +6,7 @@ import ArtworkCard from '@/components/ArtworkCard';
 import { ArtworkCardSkeleton } from '@/components/Loading';
 import SparklesIcon from '@/components/SparklesIcon';
 import HomePaletteBar from '@/components/HomePaletteBar';
+import MasterpieceOfTheWeek from '@/components/MasterpieceOfTheWeek';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import {
@@ -257,6 +258,9 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {/* CURATOR'S SPOTLIGHT: MASTERWORK OF THE WEEK */}
+      <MasterpieceOfTheWeek />
 
       {/* 4. AI-POWERED PERSONALIZED RECOMMENDATIONS (If available) */}
       {recommendations?.recommendedForYou?.length > 0 && (
