@@ -7,6 +7,7 @@ import { ArtworkCardSkeleton } from '@/components/Loading';
 import SparklesIcon from '@/components/SparklesIcon';
 import HomePaletteBar from '@/components/HomePaletteBar';
 import MasterpieceOfTheWeek from '@/components/MasterpieceOfTheWeek';
+import InteractiveWallShowcase from '@/components/InteractiveWallShowcase';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import {
@@ -335,6 +336,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* 3D ROOM & WALL SIMULATION SHOWCASE */}
+      <InteractiveWallShowcase />
 
       {/* 6. TOP CELEBRATED ARTISTS */}
       <section className="py-16 bg-white dark:bg-canvas-900 border-t border-ivory-200 dark:border-canvas-800">
