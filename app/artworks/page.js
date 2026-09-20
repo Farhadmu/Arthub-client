@@ -4,12 +4,14 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import ArtworkCard from '@/components/ArtworkCard';
 import { ArtworkCardSkeleton } from '@/components/Loading';
+import PaletteColorFilter from '@/components/PaletteColorFilter';
+import ArtMatchmaker from '@/components/ArtMatchmaker';
 import { useUI } from '@/context/UIContext';
 import api from '@/lib/axios';
 import SparklesIcon from '@/components/SparklesIcon';
 import {
   FiSearch, FiFilter, FiChevronLeft, FiChevronRight,
-  FiImage, FiX, FiRefreshCw
+  FiImage, FiX, FiRefreshCw, FiHeart
 } from 'react-icons/fi';
 
 const CATEGORIES = ['All', 'Painting', 'Digital', 'Sculpture', 'Photography', 'Illustration', 'Mixed Media', 'Other'];
@@ -35,6 +37,8 @@ function BrowseArtworksContent() {
   const [isSmartSearch, setIsSmartSearch] = useState(false);
   const [smartSearchQuery, setSmartSearchQuery] = useState('');
   const [smartFiltersActive, setSmartFiltersActive] = useState(null);
+  const [selectedPaletteColor, setSelectedPaletteColor] = useState(null);
+  const [showMatchmaker, setShowMatchmaker] = useState(false);
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -147,13 +151,39 @@ function BrowseArtworksContent() {
             </button>
 
             <button
-              onClick={openVisualSearch}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-canvas-850 text-canvas-700 dark:text-ivory-200 border border-ivory-300 dark:border-canvas-700 hover:border-brand-500 transition-all"
+              onClick={() => setShowMatchmaker(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-brand-500/10 to-gold-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30 hover:border-brand-500 transition-all"
             >
-              <FiImage className="text-brand-500" />
-              <span>Search by Photo</span>
+              <FiHeart className="text-brand-500" />
+              <span>Taste Matchmaker</span>
             </button>
           </div>
+        </div>
+
+        {/* Interior Palette Matcher */}
+        <div className="mb-6">
+          <PaletteColorFilter
+            selectedColor={selectedPaletteColor}
+            onSelectColor={async (hex) => {
+              setSelectedPaletteColor(hex);
+              setLoading(true);
+              try {
+                const res = await api.get(`/ai/palette-search?hex=${encodeURIComponent(hex)}&limit=16`);
+                if (res.data?.artworks) {
+                  setArtworks(res.data.artworks);
+                  setPagination({ page: 1, pages: 1, total: res.data.totalMatches });
+                }
+              } catch (e) {
+                console.error('Palette filter error:', e);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            onReset={() => {
+              setSelectedPaletteColor(null);
+              setFilters({ ...filters, page: 1 });
+            }}
+          />
         </div>
 
         {/* AI Smart Search Input (If Active) */}
@@ -361,6 +391,13 @@ function BrowseArtworksContent() {
             </button>
           </div>
         )}
+
+        {/* Art Matchmaker Modal */}
+        <ArtMatchmaker
+          isOpen={showMatchmaker}
+          onClose={() => setShowMatchmaker(false)}
+          artworks={artworks}
+        />
       </div>
     </div>
   );
