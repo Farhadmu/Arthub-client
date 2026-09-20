@@ -232,12 +232,12 @@ export default function RoomPreviewModal({ isOpen, onClose, artwork }) {
                   Wall Paint
                 </label>
                 <div className="flex items-center gap-1.5">
-                  {['#EFECE6', '#F3EDE2', '#D3D8D7', '#252D3A', '#1E242B', '#8C3D2B'].map((c) => (
+                  {['#EFECE6', '#F8F6F0', '#D3D8D7', '#252D3A', '#1A2238', '#171B24', '#8C3D2B', '#3E4E3A'].map((c) => (
                     <button
                       key={c}
                       onClick={() => setWallColor(c)}
                       className={`w-5 h-5 rounded-full border border-black/20 transition-transform ${
-                        wallColor === c ? 'scale-125 ring-2 ring-brand-500' : 'hover:scale-110'
+                        wallColor.toUpperCase() === c.toUpperCase() ? 'scale-125 ring-2 ring-brand-500 shadow-md' : 'hover:scale-110'
                       }`}
                       style={{ backgroundColor: c }}
                       title={c}
@@ -247,9 +247,12 @@ export default function RoomPreviewModal({ isOpen, onClose, artwork }) {
                     type="color"
                     value={wallColor}
                     onChange={(e) => setWallColor(e.target.value)}
-                    className="w-5 h-5 rounded cursor-pointer border-0 p-0"
-                    title="Custom color"
+                    className="w-5 h-5 rounded cursor-pointer border-0 p-0 shadow-sm"
+                    title="Choose custom paint color"
                   />
+                  <span className="font-mono text-[10px] text-canvas-500 uppercase ml-1">
+                    {wallColor}
+                  </span>
                 </div>
               </div>
 
