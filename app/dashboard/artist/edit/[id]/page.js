@@ -5,7 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Loading from '@/components/Loading';
 import toast from 'react-hot-toast';
-import { FiSave, FiArrowLeft, FiUpload } from 'react-icons/fi';
+import SparklesIcon from '@/components/SparklesIcon';
+import { FiSave, FiArrowLeft, FiUpload, FiCheckCircle } from 'react-icons/fi';
 
 const CATEGORIES = ['Painting', 'Digital', 'Sculpture', 'Photography', 'Illustration', 'Mixed Media', 'Other'];
 
@@ -15,11 +16,22 @@ export default function EditArtworkPage() {
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    title: '', description: '', price: '', category: 'Painting', image: ''
+    title: '',
+    description: '',
+    price: '',
+    category: 'Painting',
+    subcategory: '',
+    image: '',
+    style: '',
+    mood: '',
+    tags: '',
+    altText: '',
   });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [preview, setPreview] = useState('');
 
   useEffect(() => {
@@ -32,7 +44,6 @@ export default function EditArtworkPage() {
     try {
       const { data } = await api.get(`/artworks/${id}`);
 
-      // শুধু নিজের artwork edit করতে পারবে
       if (data.artist?._id !== user._id && data.artist !== user._id) {
         toast.error('You are not authorized to edit this artwork');
         router.push('/dashboard/artist');
@@ -40,11 +51,16 @@ export default function EditArtworkPage() {
       }
 
       setFormData({
-        title: data.title,
-        description: data.description,
-        price: data.price,
-        category: data.category,
-        image: data.image,
+        title: data.title || '',
+        description: data.description || '',
+        price: data.price || '',
+        category: data.category || 'Painting',
+        subcategory: data.subcategory || '',
+        image: data.image || '',
+        style: data.style || '',
+        mood: data.mood || '',
+        tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
+        altText: data.altText || '',
       });
       setPreview(data.image);
     } catch (error) {
@@ -55,33 +71,69 @@ export default function EditArtworkPage() {
     }
   };
 
+  // Secure backend upload
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
+
     const formDataImg = new FormData();
     formDataImg.append('image', file);
+
     try {
-      const response = await fetch(
-        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
-        { method: 'POST', body: formDataImg }
-      );
-      const data = await response.json();
-      setFormData((prev) => ({ ...prev, image: data.data.url }));
-      setPreview(data.data.url);
-      toast.success('Image uploaded successfully');
+      const { data } = await api.post('/upload', formDataImg, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setFormData(prev => ({ ...prev, image: data.url }));
+      setPreview(data.url);
+      toast.success('Artwork image uploaded successfully');
     } catch (error) {
-      toast.error('Image upload failed');
+      toast.error(error.response?.data?.message || 'Image upload failed');
     } finally {
       setUploading(false);
+    }
+  };
+
+  // AI Assistant in editor
+  const handleAiGenerate = async () => {
+    setAiGenerating(true);
+    try {
+      const { data } = await api.post('/ai/generate-artwork-metadata', {
+        imageUrl: formData.image,
+        initialTitle: formData.title,
+        category: formData.category,
+        hint: formData.style,
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        category: data.category || prev.category,
+        style: data.style || prev.style,
+        mood: data.mood || prev.mood,
+        tags: Array.isArray(data.tags) ? data.tags.join(', ') : prev.tags,
+        altText: data.altText || prev.altText,
+      }));
+
+      toast.success('Metadata polished with ArtHub AI!');
+    } catch (error) {
+      toast.error('AI generation failed');
+    } finally {
+      setAiGenerating(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+
     try {
-      await api.put(`/artworks/${id}`, formData);
+      const payload = {
+        ...formData,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim().toLowerCase()) : [],
+      };
+      await api.put(`/artworks/${id}`, payload);
       toast.success('Artwork updated successfully!');
       router.push('/dashboard/artist');
     } catch (error) {
@@ -91,50 +143,76 @@ export default function EditArtworkPage() {
     }
   };
 
-  if (!user || loading) return <Loading fullScreen />;
+  if (!user || loading) return <Loading fullScreen text="Loading Artwork Editor..." />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-ivory-50 dark:bg-canvas-950 py-10 sm:py-14">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-
+        
         {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
+        <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => router.back()}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => router.push('/dashboard/artist')}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-canvas-500 hover:text-brand-500 dark:text-ivory-400 transition-colors"
           >
-            <FiArrowLeft size={22} />
+            <FiArrowLeft size={16} />
+            <span>Back to Studio Dashboard</span>
           </button>
-          <div>
-            <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white">Edit Artwork</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Update your artwork details below</p>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleAiGenerate}
+            disabled={aiGenerating}
+            className="btn-ai text-xs py-2.5 px-3.5 shadow-sm"
+          >
+            <SparklesIcon className={aiGenerating ? 'animate-spin' : ''} />
+            <span>{aiGenerating ? 'AI Polishing...' : 'Polish with ArtHub AI'}</span>
+          </button>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card p-6 sm:p-10 shadow-luxury">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-canvas-950 dark:text-white mb-6">
+            Edit Artwork
+          </h1>
 
-            {/* Title */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Image Preview & Replacement */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Title <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-2">
+                Artwork Visual Preview
               </label>
+              {preview && (
+                <div className="mb-4 w-44 h-44 rounded-2xl overflow-hidden border border-ivory-300 dark:border-canvas-700 bg-ivory-100 dark:bg-canvas-800">
+                  <img src={preview} alt="Artwork preview" className="w-full h-full object-cover" />
+                </div>
+              )}
               <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="input-field"
-                placeholder="Enter artwork title"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="text-xs text-canvas-600 dark:text-ivory-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer"
               />
+              {uploading && <span className="text-xs text-brand-500 ml-3 animate-pulse">Uploading new file...</span>}
             </div>
 
-            {/* Price & Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Price (USD) <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Artwork Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Price (USD) *
                 </label>
                 <input
                   type="number"
@@ -143,95 +221,92 @@ export default function EditArtworkPage() {
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="input-field"
-                  placeholder="0.00"
+                  className="input-field text-sm"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Category <span className="text-red-500">*</span>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Category *
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="input-field"
+                  className="input-field text-sm cursor-pointer"
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Artistic Style
+                </label>
+                <input
+                  type="text"
+                  value={formData.style}
+                  onChange={(e) => setFormData({ ...formData, style: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Emotional Mood
+                </label>
+                <input
+                  type="text"
+                  value={formData.mood}
+                  onChange={(e) => setFormData({ ...formData, mood: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Metadata Tags (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Description <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                Curatorial Description *
               </label>
               <textarea
                 required
-                rows="5"
+                rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="input-field resize-none"
-                placeholder="Describe your artwork..."
+                className="input-field text-sm"
               />
             </div>
 
-            {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Artwork Image
-              </label>
-
-              {/* Current Preview */}
-              {preview && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">Current Image:</p>
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="w-48 h-48 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow"
-                  />
-                </div>
-              )}
-
-              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors">
-                <div className="text-center">
-                  <FiUpload className="mx-auto mb-2 text-gray-400" size={24} />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {uploading ? 'Uploading...' : 'Click to upload new image'}
-                  </span>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </label>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex space-x-4 pt-2">
-              <button
-                type="submit"
-                disabled={saving || uploading}
-                className="flex-1 btn-primary flex items-center justify-center space-x-2 py-3 text-base disabled:opacity-50"
-              >
-                <FiSave />
-                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-              </button>
+            <div className="flex justify-end gap-3 pt-4 border-t border-ivory-200 dark:border-canvas-800">
               <button
                 type="button"
-                onClick={() => router.back()}
-                className="flex-1 btn-outline py-3 text-base"
+                onClick={() => router.push('/dashboard/artist')}
+                className="btn-secondary text-xs py-2.5 px-5"
               >
                 Cancel
               </button>
+              <button
+                type="submit"
+                disabled={saving || uploading}
+                className="btn-primary text-xs py-2.5 px-6"
+              >
+                <FiSave />
+                <span>{saving ? 'Saving Updates...' : 'Save Changes'}</span>
+              </button>
             </div>
-
           </form>
         </div>
       </div>

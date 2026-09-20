@@ -2,89 +2,131 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { FiFacebook, FiTwitter, FiInstagram, FiGithub } from 'react-icons/fi';
+import { FiTwitter, FiInstagram, FiGithub, FiImage, FiArrowRight, FiCheck } from 'react-icons/fi';
+import SparklesIcon from './SparklesIcon';
+import { useUI } from '@/context/UIContext';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const { openCurator, openVisualSearch } = useUI();
 
   const handleSubscribe = (e) => {
     e.preventDefault();
     if (!email.trim()) return;
 
-    // Frontend-only placeholder — no backend endpoint, just a friendly confirmation.
-    toast.success("Thanks for subscribing! You'll hear from us soon.");
+    toast.success("Welcome to ArtHub Gazette! You'll receive our weekly curated drops.");
     setSubscribed(true);
     setEmail('');
-    setTimeout(() => setSubscribed(false), 3000);
+    setTimeout(() => setSubscribed(false), 4000);
   };
 
   return (
-    <footer className="bg-primary-600 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-primary-600 font-bold text-xl">A</span>
+    <footer className="bg-canvas-950 text-ivory-300 border-t border-canvas-800 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+          
+          {/* Brand Col */}
+          <div className="lg:col-span-2 space-y-4">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 via-brand-600 to-gold-500 flex items-center justify-center text-white shadow-glow">
+                <span className="font-display font-black text-xl">A</span>
               </div>
-              <span className="text-2xl font-display font-bold">ArtHub</span>
-            </div>
-            <p className="text-sm opacity-90">
-              Discover and buy original art from talented artists around the world.
+              <span className="text-2xl font-display font-extrabold tracking-tight text-white">
+                Art<span className="text-brand-500">Hub</span>
+              </span>
+            </Link>
+            <p className="text-xs sm:text-sm text-canvas-400 max-w-sm leading-relaxed">
+              The premier AI-powered art marketplace connecting collectors with verified original creators worldwide through intelligent curation and visual search.
             </p>
+            <div className="flex items-center gap-3 pt-2">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-canvas-900 hover:bg-brand-500 hover:text-white transition-colors text-canvas-400">
+                <FiTwitter size={16} />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-canvas-900 hover:bg-brand-500 hover:text-white transition-colors text-canvas-400">
+                <FiInstagram size={16} />
+              </a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl bg-canvas-900 hover:bg-brand-500 hover:text-white transition-colors text-canvas-400">
+                <FiGithub size={16} />
+              </a>
+            </div>
           </div>
 
+          {/* AI Features */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><Link href="/about" className="hover:opacity-80 transition-opacity">About</Link></li>
-              <li><Link href="/contact" className="hover:opacity-80 transition-opacity">Contact</Link></li>
-              <li><Link href="/privacy" className="hover:opacity-80 transition-opacity">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:opacity-80 transition-opacity">Terms of Service</Link></li>
+            <h4 className="font-display font-bold text-sm text-white mb-4">AI Innovation</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <button onClick={openCurator} className="hover:text-brand-400 flex items-center gap-1.5 transition-colors">
+                  <SparklesIcon className="text-brand-500" />
+                  <span>ArtHub AI Curator</span>
+                </button>
+              </li>
+              <li>
+                <button onClick={openVisualSearch} className="hover:text-brand-400 flex items-center gap-1.5 transition-colors">
+                  <FiImage className="text-brand-500" />
+                  <span>Visual Image Search</span>
+                </button>
+              </li>
+              <li>
+                <Link href="/artworks" className="hover:text-brand-400 transition-colors">
+                  Smart Natural Search
+                </Link>
+              </li>
+              <li>
+                <Link href="/register" className="hover:text-brand-400 transition-colors">
+                  Artist AI Studio
+                </Link>
+              </li>
             </ul>
           </div>
 
+          {/* Curated Mediums */}
           <div>
-            <h3 className="font-semibold mb-4">Categories</h3>
-            <ul className="space-y-2">
-              <li><Link href="/artworks?category=Painting" className="hover:opacity-80 transition-opacity">Painting</Link></li>
-              <li><Link href="/artworks?category=Digital" className="hover:opacity-80 transition-opacity">Digital Art</Link></li>
-              <li><Link href="/artworks?category=Sculpture" className="hover:opacity-80 transition-opacity">Sculpture</Link></li>
-              <li><Link href="/artworks?category=Photography" className="hover:opacity-80 transition-opacity">Photography</Link></li>
+            <h4 className="font-display font-bold text-sm text-white mb-4">Fine Art Mediums</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li><Link href="/artworks?category=Painting" className="hover:text-brand-400 transition-colors">Paintings</Link></li>
+              <li><Link href="/artworks?category=Digital" className="hover:text-brand-400 transition-colors">Digital Compositions</Link></li>
+              <li><Link href="/artworks?category=Sculpture" className="hover:text-brand-400 transition-colors">Sculptures & 3D</Link></li>
+              <li><Link href="/artworks?category=Photography" className="hover:text-brand-400 transition-colors">Photography</Link></li>
+              <li><Link href="/artworks?category=Illustration" className="hover:text-brand-400 transition-colors">Illustrations</Link></li>
             </ul>
           </div>
 
+          {/* Newsletter */}
           <div>
-            <h3 className="font-semibold mb-4">Newsletter</h3>
-            <p className="text-sm mb-4 opacity-90">Subscribe to get updates on new artworks and artists.</p>
-            <form onSubmit={handleSubscribe} className="flex">
+            <h4 className="font-display font-bold text-sm text-white mb-4">ArtHub Gazette</h4>
+            <p className="text-xs text-canvas-400 mb-3">
+              Receive weekly curated exhibitions, new artist debuts, and market trends.
+            </p>
+            <form onSubmit={handleSubscribe} className="space-y-2">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                className="flex-1 px-4 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-l-lg focus:outline-none focus:bg-opacity-30 placeholder-white placeholder-opacity-70 min-w-0"
+                placeholder="curator@gallery.com"
+                className="w-full bg-canvas-900 border border-canvas-750 text-white placeholder:text-canvas-500 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-white text-primary-600 font-medium rounded-r-lg hover:bg-opacity-90 transition-all whitespace-nowrap"
+                className="w-full btn-primary text-xs py-2.5 justify-center"
               >
-                {subscribed ? 'Subscribed!' : 'Subscribe'}
+                <span>{subscribed ? 'Subscribed' : 'Join Gazette'}</span>
+                {subscribed ? <FiCheck /> : <FiArrowRight />}
               </button>
             </form>
-            <div className="flex space-x-4 mt-6">
-              <a href="https://www.facebook.com/mdfarhadullislamfahim" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiFacebook size={20} /></a>
-              <a href="https://x.com/MdFarhadul1b" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiTwitter size={20} /></a>
-              <a href="#" className="hover:opacity-80 transition-opacity"><FiInstagram size={20} /></a>
-              <a href="https://github.com/Farhadmu" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FiGithub size={20} /></a>
-            </div>
           </div>
         </div>
 
-        <div className="border-t border-white border-opacity-20 mt-8 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} ArtHub. All rights reserved.</p>
+        <div className="pt-12 mt-12 border-t border-canvas-850 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-canvas-500">
+          <p>© {new Date().getFullYear()} ArtHub Inc. All Rights Reserved. Empowering artists worldwide.</p>
+          <div className="flex gap-6">
+            <Link href="/privacy" className="hover:text-brand-400 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-brand-400 transition-colors">Terms of Service</Link>
+            <Link href="/about" className="hover:text-brand-400 transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-brand-400 transition-colors">Contact</Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -4,24 +4,47 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import Loading from '@/components/Loading';
+import Loading, { TableRowSkeleton } from '@/components/Loading';
 import toast from 'react-hot-toast';
-import { FiPlus, FiEdit, FiTrash2, FiDollarSign, FiImage, FiUser, FiLock, FiSave, FiUpload } from 'react-icons/fi';
+import SparklesIcon from '@/components/SparklesIcon';
+import {
+  FiPlus, FiEdit, FiTrash2, FiDollarSign, FiImage, FiUser,
+  FiLock, FiSave, FiUpload, FiTrendingUp, FiEye,
+  FiTag, FiCheckCircle, FiAlertCircle, FiShare2
+} from 'react-icons/fi';
+
+const CATEGORIES = ['Painting', 'Digital', 'Sculpture', 'Photography', 'Illustration', 'Mixed Media', 'Other'];
 
 export default function ArtistDashboard() {
   const { user, updateUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  
   const [artworks, setArtworks] = useState([]);
   const [sales, setSales] = useState([]);
+  const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('artworks');
+  const [activeTab, setActiveTab] = useState('artworks'); // 'artworks' | 'insights' | 'sales' | 'profile' | 'password'
+
+  // Artwork creation form
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', description: '', price: '', category: 'Painting', image: ''
+    title: '',
+    description: '',
+    price: '',
+    category: 'Painting',
+    subcategory: '',
+    image: '',
+    style: 'Contemporary',
+    mood: 'Inspiring',
+    tags: '',
+    altText: '',
   });
-  const [uploading, setUploading] = useState(false);
 
-  // Profile edit states
+  const [uploading, setUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiAssisted, setAiAssisted] = useState(false);
+
+  // Profile states
   const [profileData, setProfileData] = useState({ name: '', avatar: '' });
   const [profileSaving, setProfileSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -31,7 +54,7 @@ export default function ArtistDashboard() {
   const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return; // wait until auth state is resolved (prevents false redirect on reload)
+    if (authLoading) return;
     if (!user) { router.push('/login'); return; }
     if (user.role !== 'artist') { router.push('/'); return; }
     setProfileData({ name: user.name, avatar: user.avatar || '' });
@@ -40,46 +63,96 @@ export default function ArtistDashboard() {
 
   const fetchData = async () => {
     try {
-      const [artworksRes, salesRes] = await Promise.all([
+      const [artworksRes, salesRes, insightsRes] = await Promise.all([
         api.get('/artworks/artist/my-artworks'),
         api.get('/transactions/artist/sales'),
+        api.get('/ai/artist-insights').catch(() => ({ data: null })),
       ]);
-      setArtworks(artworksRes.data);
-      setSales(salesRes.data);
+      setArtworks(artworksRes.data || []);
+      setSales(salesRes.data || []);
+      if (insightsRes.data) setInsights(insightsRes.data);
     } catch (error) {
-      toast.error('Failed to load data');
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
+  // Secure Image Upload (Uses local backend endpoint /api/upload)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setUploading(true);
-    const formDataImg = new FormData();
-    formDataImg.append('image', file);
+    const form = new FormData();
+    form.append('image', file);
+
     try {
-      const response = await fetch(
-        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
-        { method: 'POST', body: formDataImg }
-      );
-      const data = await response.json();
-      setFormData({ ...formData, image: data.data.url });
-      toast.success('Image uploaded');
+      const { data } = await api.post('/upload', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setFormData(prev => ({ ...prev, image: data.url }));
+      toast.success('Artwork image uploaded successfully');
     } catch (error) {
-      toast.error('Image upload failed');
+      toast.error(error.response?.data?.message || 'Image upload failed');
     } finally {
       setUploading(false);
     }
   };
 
+  // AI Artwork Generator: Title, description, tags, style, mood, SEO, alt text
+  const handleAiGenerate = async () => {
+    setAiGenerating(true);
+    try {
+      const { data } = await api.post('/ai/generate-artwork-metadata', {
+        imageUrl: formData.image,
+        initialTitle: formData.title,
+        category: formData.category,
+        hint: formData.style,
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        category: data.category || prev.category,
+        subcategory: data.subcategory || prev.subcategory,
+        style: data.style || prev.style,
+        mood: data.mood || prev.mood,
+        tags: Array.isArray(data.tags) ? data.tags.join(', ') : prev.tags,
+        altText: data.altText || prev.altText,
+      }));
+
+      setAiAssisted(true);
+      toast.success('Metadata generated with ArtHub AI! You can review & edit any field.');
+    } catch (error) {
+      toast.error('AI generation failed, please try again');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const handleAddArtwork = async (e) => {
     e.preventDefault();
+    if (!formData.image) {
+      toast.error('Please upload an artwork image');
+      return;
+    }
+
     try {
-      await api.post('/artworks', formData);
-      toast.success('Artwork added');
-      setFormData({ title: '', description: '', price: '', category: 'Painting', image: '' });
+      const payload = {
+        ...formData,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim().toLowerCase()) : [],
+        aiGenerated: { isAiAssisted: aiAssisted }
+      };
+
+      await api.post('/artworks', payload);
+      toast.success('Artwork successfully published to ArtHub!');
+      setFormData({
+        title: '', description: '', price: '', category: 'Painting',
+        subcategory: '', image: '', style: 'Contemporary', mood: 'Inspiring', tags: '', altText: ''
+      });
+      setAiAssisted(false);
       setShowForm(false);
       fetchData();
     } catch (error) {
@@ -88,46 +161,23 @@ export default function ArtistDashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this artwork?')) return;
+    if (!confirm('Are you certain you want to delete this artwork? This action cannot be undone.')) return;
     try {
       await api.delete(`/artworks/${id}`);
       toast.success('Artwork deleted');
       fetchData();
     } catch (error) {
-      toast.error('Failed to delete');
+      toast.error('Failed to delete artwork');
     }
   };
 
-  // Avatar upload
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    const formDataImg = new FormData();
-    formDataImg.append('image', file);
-    try {
-      const response = await fetch(
-        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
-        { method: 'POST', body: formDataImg }
-      );
-      const data = await response.json();
-      setProfileData((prev) => ({ ...prev, avatar: data.data.url }));
-      toast.success('Avatar uploaded');
-    } catch (error) {
-      toast.error('Avatar upload failed');
-    } finally {
-      setAvatarUploading(false);
-    }
-  };
-
-  // Save profile
   const handleProfileSave = async (e) => {
     e.preventDefault();
     setProfileSaving(true);
     try {
       const { data } = await api.put('/auth/profile', profileData);
       updateUser(data.user);
-      toast.success('Profile updated successfully!');
+      toast.success('Profile updated successfully');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
@@ -135,7 +185,6 @@ export default function ArtistDashboard() {
     }
   };
 
-  // Change password
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -146,55 +195,131 @@ export default function ArtistDashboard() {
       toast.error('Password must be at least 6 characters');
       return;
     }
+
     setPasswordSaving(true);
     try {
       await api.put('/auth/change-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      toast.success('Password changed successfully!');
+      toast.success('Password updated successfully');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      toast.error(error.response?.data?.message || 'Password update failed');
     } finally {
       setPasswordSaving(false);
     }
   };
 
-  if (authLoading || !user || loading) return <Loading fullScreen />;
+  if (authLoading || !user || loading) return <Loading fullScreen text="Loading Artist Studio..." />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-ivory-50 dark:bg-canvas-950 py-10 sm:py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-display font-bold">Artist Dashboard</h1>
+        
+        {/* Studio Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-500 block">
+              Creator Studio
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-display font-bold text-canvas-950 dark:text-white">
+              Artist Dashboard
+            </h1>
+            <p className="text-sm text-canvas-500 dark:text-ivory-400 mt-0.5">
+              Manage your collections, track transactions, and leverage AI insights
+            </p>
+          </div>
+
           <button
             onClick={() => setShowForm(!showForm)}
-            className="btn-primary flex items-center space-x-2"
+            className="btn-primary text-xs sm:text-sm py-3 px-5 shadow-glow self-start sm:self-auto"
           >
-            <FiPlus />
-            <span>Add Artwork</span>
+            <FiPlus size={16} />
+            <span>{showForm ? 'Close Studio Form' : 'Add New Artwork'}</span>
           </button>
         </div>
 
-        {/* Add Artwork Form */}
+        {/* AI Studio Upload Modal/Form */}
         {showForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold mb-6">Add New Artwork</h2>
-            <form onSubmit={handleAddArtwork} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-canvas-900 border border-ivory-300 dark:border-canvas-700 shadow-luxury animate-slide-up">
+            <div className="flex items-center justify-between pb-6 border-b border-ivory-200 dark:border-canvas-800 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-display font-bold text-canvas-950 dark:text-white">
+                    Publish Artwork to ArtHub
+                  </h3>
+                  {aiAssisted && (
+                    <span className="text-[10px] font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/25 px-2.5 py-0.5 rounded-full">
+                      AI Enhanced
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-canvas-500 dark:text-ivory-400 mt-1">
+                  Upload high-res image and optionally use ArtHub AI to automatically draft titles, descriptions, and tags
+                </p>
+              </div>
+
+              {/* AI Auto-Fill Trigger */}
+              <button
+                type="button"
+                onClick={handleAiGenerate}
+                disabled={aiGenerating}
+                className="btn-ai text-xs py-2.5 px-4 shadow-sm whitespace-nowrap"
+              >
+                <SparklesIcon className={aiGenerating ? 'animate-spin' : ''} />
+                <span>{aiGenerating ? 'AI Analyzing...' : 'Generate with ArtHub AI'}</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleAddArtwork} className="space-y-6">
+              {/* Image Upload Area */}
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-2">
+                  Artwork Image *
+                </label>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="text-xs text-canvas-600 dark:text-ivory-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer"
+                  />
+                  {uploading && <span className="text-xs text-brand-500 animate-pulse font-medium">Uploading secure image...</span>}
+                  {formData.image && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <FiCheckCircle /> Image Ready
+                    </span>
+                  )}
+                </div>
+
+                {formData.image && (
+                  <div className="mt-4 w-36 h-36 rounded-2xl overflow-hidden border border-ivory-300 dark:border-canvas-700 bg-ivory-100 dark:bg-canvas-800">
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
+              {/* Inputs Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Title</label>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Title *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="input-field"
+                    placeholder="E.g. Whispers of Midnight"
+                    className="input-field text-sm"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Price ($)</label>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Price (USD) *
+                  </label>
                   <input
                     type="number"
                     required
@@ -202,355 +327,460 @@ export default function ArtistDashboard() {
                     step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="input-field"
+                    placeholder="250"
+                    className="input-field text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Category *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="input-field text-sm cursor-pointer"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Artistic Style
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.style}
+                    onChange={(e) => setFormData({ ...formData, style: e.target.value })}
+                    placeholder="E.g. Abstract Expressionism"
+                    className="input-field text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Emotional Mood
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.mood}
+                    onChange={(e) => setFormData({ ...formData, mood: e.target.value })}
+                    placeholder="E.g. Serene & Contemplative"
+                    className="input-field text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                    Search Tags (comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    placeholder="oil, blue, textured, atmospheric"
+                    className="input-field text-sm"
                   />
                 </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="input-field"
-                >
-                  <option>Painting</option>
-                  <option>Digital</option>
-                  <option>Sculpture</option>
-                  <option>Photography</option>
-                  <option>Illustration</option>
-                  <option>Mixed Media</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Curatorial Description *
+                </label>
                 <textarea
                   required
-                  rows="4"
+                  rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input-field"
+                  placeholder="Describe your creative process, themes, materials, and composition..."
+                  className="input-field text-sm"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Image</label>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Accessibility Alt Text
+                </label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="input-field"
+                  type="text"
+                  value={formData.altText}
+                  onChange={(e) => setFormData({ ...formData, altText: e.target.value })}
+                  placeholder="Text description for screen readers"
+                  className="input-field text-sm"
                 />
-                {formData.image && (
-                  <img src={formData.image} alt="Preview" className="mt-4 w-48 h-48 object-cover rounded-lg" />
-                )}
               </div>
-              <div className="flex space-x-4">
-                <button type="submit" className="btn-primary">
-                  {uploading ? 'Uploading...' : 'Add Artwork'}
-                </button>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-ivory-200 dark:border-canvas-800">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="btn-outline"
+                  className="btn-secondary text-xs py-2.5 px-5"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="btn-primary text-xs py-2.5 px-6"
+                >
+                  Publish Artwork
                 </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex space-x-4 mb-8 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setActiveTab('artworks')}
-            className={`pb-4 px-4 font-medium transition-colors ${
-              activeTab === 'artworks'
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FiImage className="inline mr-2" />
-            My Artworks
-          </button>
-          <button
-            onClick={() => setActiveTab('sales')}
-            className={`pb-4 px-4 font-medium transition-colors ${
-              activeTab === 'sales'
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FiDollarSign className="inline mr-2" />
-            Sales History
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`pb-4 px-4 font-medium transition-colors ${
-              activeTab === 'profile'
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FiUser className="inline mr-2" />
-            Profile
-          </button>
+        {/* Dashboard Navigation Tabs */}
+        <div className="flex items-center gap-2 border-b border-ivory-200 dark:border-canvas-800 pb-3 mb-8 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'artworks', label: `My Artworks (${artworks.length})`, icon: <FiImage /> },
+            { id: 'insights', label: 'AI Insights & Analytics', icon: <SparklesIcon /> },
+            { id: 'sales', label: `Sales History (${sales.length})`, icon: <FiDollarSign /> },
+            { id: 'profile', label: 'Profile Settings', icon: <FiUser /> },
+            { id: 'password', label: 'Security', icon: <FiLock /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? 'bg-brand-500 text-white shadow-sm'
+                  : 'text-canvas-600 dark:text-ivory-300 hover:bg-ivory-200 dark:hover:bg-canvas-800'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* My Artworks */}
+        {/* TAB 1: MY ARTWORKS */}
         {activeTab === 'artworks' && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="space-y-6">
             {artworks.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4">Image</th>
-                      <th className="text-left py-3 px-4">Title</th>
-                      <th className="text-left py-3 px-4">Price</th>
-                      <th className="text-left py-3 px-4">Status</th>
-                      <th className="text-left py-3 px-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {artworks.map((artwork) => (
-                      <tr key={artwork._id} className="border-b border-gray-100 dark:border-gray-700">
-                        <td className="py-4 px-4">
-                          <img src={artwork.image} alt={artwork.title} className="w-16 h-16 object-cover rounded" />
-                        </td>
-                        <td className="py-4 px-4 font-medium">{artwork.title}</td>
-                        <td className="py-4 px-4">${artwork.price}</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            artwork.isSold
-                              ? 'bg-red-100 text-red-800'
-                              : artwork.isPublished
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {artwork.isSold ? 'Sold' : artwork.isPublished ? 'Published' : 'Unpublished'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex space-x-3">
-                            <Link
-                              href={`/artworks/${artwork._id}`}
-                              className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                            >
-                              View
-                            </Link>
-                            {!artwork.isSold && (
-                              <Link
-                                href={`/dashboard/artist/edit/${artwork._id}`}
-                                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
-                              >
-                                <FiEdit size={14} />
-                                <span>Edit</span>
-                              </Link>
-                            )}
-                            <button
-                              onClick={() => handleDelete(artwork._id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {artworks.map((art) => (
+                  <div key={art._id} className="card p-3 flex flex-col justify-between group">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-ivory-200 dark:bg-canvas-800 mb-3">
+                      <img src={art.image} alt={art.title} className="w-full h-full object-cover" />
+                      {art.isSold && (
+                        <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                          Sold
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <FiEye size={12} />
+                        <span>{art.views || 0} views</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="font-display font-semibold text-sm text-canvas-900 dark:text-ivory-100 truncate">
+                        {art.title}
+                      </h4>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-canvas-500">{art.category}</span>
+                        <span className="font-bold text-brand-600 dark:text-brand-400">${art.price}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-ivory-200 dark:border-canvas-800 flex items-center justify-between">
+                      <Link
+                        href={`/dashboard/artist/edit/${art._id}`}
+                        className="p-2 text-canvas-500 hover:text-brand-500 rounded-lg hover:bg-ivory-100 dark:hover:bg-canvas-800"
+                        title="Edit Artwork"
+                      >
+                        <FiEdit size={15} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(art._id)}
+                        className="p-2 text-canvas-500 hover:text-red-500 rounded-lg hover:bg-red-500/10"
+                        title="Delete Artwork"
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                      <Link
+                        href={`/artworks/${art._id}`}
+                        className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+                      >
+                        Examine →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No artworks yet. Add your first artwork!</p>
+              <div className="text-center py-20 card p-8">
+                <FiImage size={40} className="mx-auto text-canvas-400 mb-3" />
+                <h3 className="font-display font-bold text-lg text-canvas-900 dark:text-ivory-100">
+                  No artworks in your studio yet
+                </h3>
+                <p className="text-xs text-canvas-500 dark:text-ivory-400 mt-1">
+                  Click "Add New Artwork" above to upload and start sharing your pieces with collectors.
+                </p>
+              </div>
             )}
           </div>
         )}
 
-        {/* Sales History */}
+        {/* TAB 2: AI INSIGHTS & ANALYTICS */}
+        {activeTab === 'insights' && insights && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Metric KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="card p-5">
+                <span className="text-xs text-canvas-400 font-medium block">Total Artwork Views</span>
+                <span className="text-2xl sm:text-3xl font-display font-bold text-canvas-900 dark:text-white mt-1 block">
+                  {insights.metrics?.totalViews || 0}
+                </span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                  <FiTrendingUp /> Active engagement
+                </span>
+              </div>
+
+              <div className="card p-5">
+                <span className="text-xs text-canvas-400 font-medium block">Wishlist Additions</span>
+                <span className="text-2xl sm:text-3xl font-display font-bold text-canvas-900 dark:text-white mt-1 block">
+                  {insights.metrics?.totalWishlistCount || 0}
+                </span>
+                <span className="text-[11px] text-canvas-500">Collectors tracking pieces</span>
+              </div>
+
+              <div className="card p-5">
+                <span className="text-xs text-canvas-400 font-medium block">Total Revenue</span>
+                <span className="text-2xl sm:text-3xl font-display font-bold text-brand-600 dark:text-brand-400 mt-1 block">
+                  ${insights.metrics?.totalRevenue?.toLocaleString() || '0'}
+                </span>
+                <span className="text-[11px] text-canvas-500">{insights.metrics?.totalSalesCount || 0} sales verified</span>
+              </div>
+
+              <div className="card p-5">
+                <span className="text-xs text-canvas-400 font-medium block">Conversion Rate</span>
+                <span className="text-2xl sm:text-3xl font-display font-bold text-canvas-900 dark:text-white mt-1 block">
+                  {insights.metrics?.conversionRate || '0%'}
+                </span>
+                <span className="text-[11px] text-canvas-500">View to purchase ratio</span>
+              </div>
+            </div>
+
+            {/* AI Actionable Growth Suggestions */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-brand-500/10 via-ivory-100 dark:via-canvas-900 to-gold-500/10 border border-brand-500/30 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-brand-500 text-white flex items-center justify-center shadow-glow">
+                  <SparklesIcon size={16} />
+                </div>
+                <h3 className="font-display font-bold text-lg text-canvas-950 dark:text-white">
+                  ArtHub AI Curatorial Intelligence
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(insights.aiSuggestions || []).map((sug, sIdx) => (
+                  <div
+                    key={sIdx}
+                    className="p-4 rounded-2xl bg-white dark:bg-canvas-800 border border-ivory-200 dark:border-canvas-700 shadow-xs space-y-2"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-500">
+                      {sug.type}
+                    </span>
+                    <h4 className="font-display font-bold text-sm text-canvas-900 dark:text-ivory-100">
+                      {sug.title}
+                    </h4>
+                    <p className="text-xs text-canvas-600 dark:text-ivory-300 leading-relaxed">
+                      {sug.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Category Performance Breakdown */}
+            <div className="card p-6 sm:p-8">
+              <h3 className="font-display font-bold text-base text-canvas-900 dark:text-ivory-100 mb-4">
+                Category Retention Breakdown
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(insights.categoryStats || {}).map(([cat, stat]) => (
+                  <div key={cat} className="p-4 rounded-xl bg-ivory-100 dark:bg-canvas-800 border border-ivory-200 dark:border-canvas-750">
+                    <span className="text-xs font-bold text-canvas-800 dark:text-ivory-200 block">{cat}</span>
+                    <div className="mt-2 text-xs space-y-1 text-canvas-500 dark:text-ivory-400">
+                      <div className="flex justify-between">
+                        <span>Artworks:</span> <strong className="text-canvas-800 dark:text-ivory-200">{stat.count}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Views:</span> <strong className="text-canvas-800 dark:text-ivory-200">{stat.views}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Sold:</span> <strong className="text-brand-600 dark:text-brand-400">{stat.sold}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: SALES HISTORY */}
         {activeTab === 'sales' && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="card overflow-hidden">
+            <div className="p-5 border-b border-ivory-200 dark:border-canvas-750">
+              <h3 className="font-display font-bold text-base text-canvas-900 dark:text-ivory-100">
+                Collector Transaction History
+              </h3>
+            </div>
             {sales.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4">Artwork</th>
-                      <th className="text-left py-3 px-4">Buyer</th>
-                      <th className="text-left py-3 px-4">Amount</th>
-                      <th className="text-left py-3 px-4">Date</th>
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-ivory-100 dark:bg-canvas-800 text-canvas-500 uppercase text-[11px]">
+                    <tr>
+                      <th className="px-6 py-3">Artwork</th>
+                      <th className="px-6 py-3">Collector</th>
+                      <th className="px-6 py-3">Amount</th>
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {sales.map((sale) => (
-                      <tr key={sale._id} className="border-b border-gray-100 dark:border-gray-700">
-                        <td className="py-4 px-4">{sale.artworkTitle}</td>
-                        <td className="py-4 px-4">{sale.userEmail}</td>
-                        <td className="py-4 px-4 font-semibold">${sale.amount}</td>
-                        <td className="py-4 px-4">{new Date(sale.createdAt).toLocaleDateString()}</td>
+                  <tbody className="divide-y divide-ivory-200 dark:divide-canvas-800">
+                    {sales.map((t) => (
+                      <tr key={t._id}>
+                        <td className="px-6 py-4 font-semibold text-canvas-900 dark:text-ivory-100">
+                          {t.artworkTitle || t.artwork?.title || 'Original Artwork'}
+                        </td>
+                        <td className="px-6 py-4 text-canvas-600 dark:text-ivory-300">
+                          {t.user?.name || t.userEmail || 'Collector'}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-brand-600 dark:text-brand-400">
+                          ${t.amount}
+                        </td>
+                        <td className="px-6 py-4 text-canvas-500">
+                          {new Date(t.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] font-bold uppercase text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                            {t.status}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No sales yet</p>
+              <div className="p-12 text-center text-xs text-canvas-400">
+                No sales recorded yet. Keep promoting your art on ArtHub!
+              </div>
             )}
           </div>
         )}
 
-        {/* Profile */}
+        {/* TAB 4: PROFILE SETTINGS */}
         {activeTab === 'profile' && (
-          <div className="space-y-6">
+          <div className="max-w-xl card p-6 sm:p-8">
+            <h3 className="font-display font-bold text-lg text-canvas-900 dark:text-ivory-100 mb-6">
+              Artist Profile Information
+            </h3>
+            <form onSubmit={handleProfileSave} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  className="input-field text-sm"
+                  required
+                />
+              </div>
 
-            {/* Edit Profile Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center space-x-2">
-                <FiUser className="text-primary-600" />
-                <span>Edit Profile</span>
-              </h2>
-              <form onSubmit={handleProfileSave} className="space-y-5 max-w-lg">
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Avatar Image URL
+                </label>
+                <input
+                  type="text"
+                  value={profileData.avatar}
+                  onChange={(e) => setProfileData({ ...profileData, avatar: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
 
-                {/* Avatar */}
-                <div className="flex items-center space-x-5">
-                  <div className="relative">
-                    {profileData.avatar ? (
-                      <img
-                        src={profileData.avatar}
-                        alt="Avatar"
-                        className="w-20 h-20 rounded-full object-cover border-4 border-primary-200"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full bg-primary-200 flex items-center justify-center text-primary-700 text-2xl font-bold">
-                        {user.name?.[0]?.toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="cursor-pointer inline-flex items-center space-x-2 btn-outline py-2 px-4 text-sm">
-                      <FiUpload size={14} />
-                      <span>{avatarUploading ? 'Uploading...' : 'Change Photo'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                        className="hidden"
-                        disabled={avatarUploading}
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">JPG, PNG up to 2MB</p>
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    className="input-field"
-                    placeholder="Your name"
-                  />
-                </div>
-
-                {/* Email (read only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    readOnly
-                    className="input-field opacity-60 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-                </div>
-
-                {/* Role (read only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
-                  <input
-                    type="text"
-                    value="Artist"
-                    readOnly
-                    className="input-field opacity-60 cursor-not-allowed capitalize"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={profileSaving || avatarUploading}
-                  className="btn-primary flex items-center space-x-2 disabled:opacity-50"
-                >
-                  <FiSave />
-                  <span>{profileSaving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-              </form>
-            </div>
-
-            {/* Change Password Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center space-x-2">
-                <FiLock className="text-primary-600" />
-                <span>Change Password</span>
-              </h2>
-              {user.googleId && !user.password ? (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 text-yellow-800 dark:text-yellow-300 text-sm">
-                  Password change is not available for Google accounts.
-                </div>
-              ) : (
-                <form onSubmit={handlePasswordChange} className="space-y-5 max-w-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
-                    <input
-                      type="password"
-                      required
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      className="input-field"
-                      placeholder="Enter current password"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Password</label>
-                    <input
-                      type="password"
-                      required
-                      minLength={6}
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className="input-field"
-                      placeholder="Enter new password"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm New Password</label>
-                    <input
-                      type="password"
-                      required
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className="input-field"
-                      placeholder="Confirm new password"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={passwordSaving}
-                    className="btn-primary flex items-center space-x-2 disabled:opacity-50"
-                  >
-                    <FiLock />
-                    <span>{passwordSaving ? 'Changing...' : 'Change Password'}</span>
-                  </button>
-                </form>
-              )}
-            </div>
-
+              <button
+                type="submit"
+                disabled={profileSaving}
+                className="btn-primary text-xs py-3 px-6 mt-4"
+              >
+                <FiSave />
+                <span>{profileSaving ? 'Saving Changes...' : 'Save Profile'}</span>
+              </button>
+            </form>
           </div>
         )}
+
+        {/* TAB 5: PASSWORD SETTINGS */}
+        {activeTab === 'password' && (
+          <div className="max-w-xl card p-6 sm:p-8">
+            <h3 className="font-display font-bold text-lg text-canvas-900 dark:text-ivory-100 mb-6">
+              Update Studio Password
+            </h3>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-canvas-700 dark:text-ivory-200 mb-1.5">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  className="input-field text-sm"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={passwordSaving}
+                className="btn-primary text-xs py-3 px-6 mt-4"
+              >
+                <FiLock />
+                <span>{passwordSaving ? 'Updating...' : 'Update Password'}</span>
+              </button>
+            </form>
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
-
