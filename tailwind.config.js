@@ -92,6 +92,11 @@ module.exports = {
         'glow': '0 0 20px rgba(224, 122, 95, 0.35)',
         'glow-gold': '0 0 20px rgba(212, 175, 55, 0.35)',
       },
+      backgroundImage: {
+        'gold-foil': 'linear-gradient(135deg, #f0d984 0%, #e5c358 25%, #d4af37 50%, #b89428 75%, #f0d984 100%)',
+        'obsidian-glass': 'linear-gradient(180deg, rgba(23, 27, 36, 0.8) 0%, rgba(15, 17, 23, 0.95) 100%)',
+        'aurora': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(224, 122, 95, 0.25), transparent)',
+      },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
