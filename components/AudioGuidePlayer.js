@@ -167,6 +167,8 @@ export default function AudioGuidePlayer({ artworkId, artworkTitle, artistName }
             <FiList className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
       {/* Speech fallback notification */}
       {speechError && (
         <div className="mt-3 p-2.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-300 text-xs flex items-center justify-between">
