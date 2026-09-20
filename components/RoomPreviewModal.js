@@ -17,6 +17,7 @@ export default function RoomPreviewModal({ isOpen, onClose, artwork }) {
   // Pre-configured luxury room backgrounds
   const rooms = [
     { id: 'living', name: 'Minimalist Loft', baseColor: '#EFECE6' },
+    { id: 'gallery', name: 'Metropolitan Museum', baseColor: '#DFDDD7' },
     { id: 'salon', name: 'Obsidian Salon', baseColor: '#171B24' },
     { id: 'studio', name: 'Nordic Studio', baseColor: '#F8F6F0' },
     { id: 'office', name: 'Executive Suite', baseColor: '#2B303A' },
