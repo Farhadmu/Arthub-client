@@ -55,6 +55,25 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-500/10 via-transparent to-transparent pointer-events-none" />
         
         <div className="max-w-7xl mx-auto">
+          {/* Live Auction Ticker Banner */}
+          <Link
+            href="/auctions"
+            className="group mb-8 inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-canvas-900/90 text-white border border-gold-500/40 shadow-luxury-sm hover:shadow-luxury hover:border-gold-500 transition-all text-xs"
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500 live-pulse" />
+            <span className="font-semibold text-gold-400 uppercase tracking-widest text-[10px]">
+              Live Auction Arena
+            </span>
+            <span className="text-canvas-300 hidden sm:inline">·</span>
+            <span className="text-ivory-200 hidden sm:inline">
+              Active bidding on curated 1/1 original masterworks
+            </span>
+            <span className="font-semibold text-brand-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+              <span>Enter Arena</span>
+              <span>→</span>
+            </span>
+          </Link>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Column: Heading & CTAs */}
