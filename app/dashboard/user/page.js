@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import Loading from '@/components/Loading';
+import CertificateModal from '@/components/CertificateModal';
+import SparklesIcon from '@/components/SparklesIcon';
 import toast from 'react-hot-toast';
 import {
   FiShoppingBag, FiStar, FiUser, FiImage, FiLock,
-  FiSave, FiUpload, FiCheck, FiBell, FiCheckCircle
+  FiSave, FiUpload, FiCheck, FiBell, FiCheckCircle, FiAward
 } from 'react-icons/fi';
 
 export default function UserDashboard() {
@@ -20,6 +22,7 @@ export default function UserDashboard() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('purchases'); // 'purchases' | 'notifications' | 'subscription' | 'profile' | 'password'
+  const [selectedCertArtwork, setSelectedCertArtwork] = useState(null);
 
   // Profile states
   const [profileData, setProfileData] = useState({ name: '', avatar: '' });
@@ -193,17 +196,26 @@ export default function UserDashboard() {
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-ivory-200 dark:border-canvas-800 flex items-center justify-between">
-                      {t.artwork?._id && (
-                        <Link
-                          href={`/artworks/${t.artwork._id}`}
-                          className="btn-outline text-xs py-1.5 px-3"
+                    <div className="mt-4 pt-3 border-t border-ivory-200 dark:border-canvas-800 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {t.artwork?._id && (
+                          <Link
+                            href={`/artworks/${t.artwork._id}`}
+                            className="btn-outline text-xs py-1.5 px-3"
+                          >
+                            View Artwork
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => setSelectedCertArtwork(t.artwork || { title: t.artworkTitle, _id: t.artwork })}
+                          className="inline-flex items-center gap-1 text-xs py-1.5 px-3 rounded-xl border border-gold-500/40 bg-gold-500/10 text-gold-600 dark:text-gold-400 hover:bg-gold-500 hover:text-white transition-all font-semibold"
                         >
-                          View & Leave Review
-                        </Link>
-                      )}
+                          <SparklesIcon className="w-3.5 h-3.5" />
+                          <span>View COA Certificate</span>
+                        </button>
+                      </div>
                       <span className="text-[11px] font-bold uppercase text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                        Verified
+                        Acquired
                       </span>
                     </div>
                   </div>
@@ -446,6 +458,14 @@ export default function UserDashboard() {
             </form>
           </div>
         )}
+
+        {/* Certificate of Authenticity Modal */}
+        <CertificateModal
+          isOpen={Boolean(selectedCertArtwork)}
+          onClose={() => setSelectedCertArtwork(null)}
+          artwork={selectedCertArtwork}
+          buyerName={user?.name}
+        />
 
       </div>
     </div>
